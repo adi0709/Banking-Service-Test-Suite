@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package banking;
+
+service CreateBankingService {
+    rpc CreateUser (CreateUserPayload) returns (CreateUserResponse);
+    rpc Deposit (DepositRequest) returns (DepositResponse);
+    rpc Withdraw (WithdrawRequest) returns (WithdrawResponse);
+    rpc GetBalance (GetBalanceRequest) returns (GetBalanceResponse);
+    rpc SendMoney (SendMoneyRequest) returns (SendMoneyResponse);
+}
+
+
+// Messages for Create User Service
+message Account {
+    int32 account_id = 1;
+    Money account_balance = 2;
+}
+
+message CreateUserPayload {
+    string first_name = 1;
+    string last_name = 2;
+    string id_number = 3;
+    string residency_country_code = 4;
+    string nationality = 5;
+    string email = 6;
+    string phone_number = 7;
+    string gender = 8;
+    string dob = 9;
+    string account_currency = 10;
+}
+
+message CreateUserData {
+    int32 person_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string id_number = 4;
+    string residency_country_code = 5;
+    string nationality = 6;
+    string email = 7;
+    string phone_number = 8;
+    string gender = 9;
+    string dob = 10;
+    string account_currency = 11;
+    Account account = 12;
+}
+
+message CreateUserResponse {
+    string error = 1;
+    CreateUserData data = 2;
+}
+
+
+// Messages for Deposit Service
+message Money {
+    double amount = 1;
+    string currency_code = 2;
+}
+
+message DepositData {
+    int32 transaction_id = 1;
+    Money account_balance = 2;
+    string transaction_summary = 3;
+}
+
+message DepositRequest {
+    Money money = 1;
+    int32 account_id = 2;
+    string value_date = 3;
+    string description = 4;
+}
+
+message DepositResponse {
+    string error = 1;
+    DepositData data = 2;
+}
+
+// Messages for Withdrawal service
+message WithdrawData {
+    int32 transaction_id = 1;
+    Money account_balance = 2;
+    string description = 3;
+}
+
+message WithdrawRequest {
+    Money money = 1;
+    int32 account_id = 2;
+    string value_date = 3;
+    string withdrawal_summary = 4;
+}
+
+message WithdrawResponse {
+    string error= 1;
+    WithdrawData data = 2;
+}
+
+// Messages to get Account Balance service
+message GetBalanceRequest {
+    int32 account_id = 1;
+}
+
+message GetBalanceResponse {
+    string error= 1;
+    Money account_balance = 2;
+}
+
+// Messages for Send Money Service
+message SendMoneyData {
+    Money sender_new_balance = 1;
+    Money receiver_new_balance = 2;
+    string transaction_id = 3;
+}
+
+message SendMoneyRequest {
+    int32 sender_account_id = 1;
+    int32 receiver_account_id = 2;
+    Money money = 3;
+    string description = 4;
+}
+
+message SendMoneyResponse {
+    string error = 1;
+    SendMoneyData data = 2;
+}
