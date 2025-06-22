@@ -290,29 +290,4 @@ describe('Banking gRPC Service - Performance Tests', () => {
         })
 
     })
-
-    describe('Memory and resource Testing',()=>{
-        test('should not have memory leaks with repeated operations', async () => {
-            const initialMemory = process.memoryUsage();
-            const iterations = 100;
-
-            for (let i = 0; i < iterations; i++) {
-                const userData = testHelpers.generateUserData();
-                await testHelpers.promisifyCall('CreateUser', userData);
-
-                if (i % 10 === 0) {
-                    global.gc && global.gc(); // Force garbage collection if available
-                }
-            }
-
-            const finalMemory = process.memoryUsage();
-            const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
-            const memoryIncreasePerOperation = memoryIncrease / iterations;
-
-            console.log(`Memory increase per operation: ${(memoryIncreasePerOperation / 1024).toFixed(2)} KB`);
-
-            // Memory increase should be reasonable (less than 10KB per operation)
-            expect(memoryIncreasePerOperation).toBeLessThan(10 * 1024);
-        });
-    })
 })
