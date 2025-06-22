@@ -10,8 +10,7 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
         await testHelpers.initialize();
 
         // Create a receiver user that will be used across all tests
-        const receiverUserData = testHelpers.generateUserData();
-        receiverResponse = await testHelpers.promisifyCall('CreateUser', receiverUserData);
+        receiverResponse = await testHelpers.createUser();
     });
 
     afterAll(async () => {
@@ -21,50 +20,20 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
     describe('Successful Money Transfer', () => {
         test('should transfer money successfully', async () => {
 
-            const {userResponse} = await testHelpers.createUserWithDeposit(null, 1000);
-
-
-            // TODO: Use a new function to create both sender and receiver data to simplify tests
-            // Create sender user with same currency as receiver
-            const senderUserData = testHelpers.generateUserData({
-                account_currency: receiverResponse.data.account_currency
-            });
-            const senderResponse = await testHelpers.promisifyCall('CreateUser', senderUserData);
-
-            // Make a deposit to sender account
-            const depositAmount = Number(faker.finance.amount());
-            const depositRequest = {
-                money: {
-                    amount: depositAmount,
-                    currency_code: senderResponse.data.account_currency
-                },
-                account_id: senderResponse.data.account.account_id,
-                value_date: new Date().toLocaleDateString('en-GB'),
-                description: "Test deposit"
-            };
-            await testHelpers.promisifyCall('Deposit', depositRequest);
+            const senderUserData = testHelpers.generateUserData({ account_currency: receiverResponse.data.account_currency });
+            const {userResponse: senderResponse} = await testHelpers.createUserWithDeposit(senderUserData, 1000);
 
             // Get sender's balance before transfer
             const getBalanceRequest = {
                 account_id: senderResponse.data.account.account_id,
             };
             const getBalanceResponse = await testHelpers.promisifyCall('GetBalance', getBalanceRequest);
+            const senderAccountBalance = getBalanceResponse.account_balance.amount
 
             // Generate transfer amount that's less than available balance
-            let amountToBeSent = Number(faker.finance.amount());
-            while (amountToBeSent > getBalanceResponse.account_balance.amount) {
-                amountToBeSent = Number(faker.finance.amount());
-            }
+            let amountToBeSent = testHelpers.getValidAmount(senderAccountBalance)
 
-            const sendMoneyRequest = {
-                sender_account_id: senderResponse.data.account.account_id,
-                receiver_account_id: receiverResponse.data.account.account_id,
-                money: {
-                    amount: amountToBeSent,
-                    currency_code: senderResponse.data.account_currency,
-                },
-                description: "Test transfer"
-            };
+            const sendMoneyRequest = testHelpers.generateSendMoneyRequest(senderResponse.data.account.account_id, receiverResponse.data.account.account_id, senderResponse.data.account_currency, amountToBeSent)
 
             const sendMoneyResponse = await testHelpers.promisifyCall('SendMoney', sendMoneyRequest);
 
@@ -101,20 +70,13 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
             const depositResponse = await testHelpers.promisifyCall('Deposit', depositRequest);
 
             // Generate transfer amount that's more than available balance
-            let amountToBeSent = Number(faker.finance.amount());
-            while (amountToBeSent <= depositResponse.data.account_balance.amount) {
-                amountToBeSent = Number(faker.finance.amount()) + depositResponse.data.account_balance.amount;
-            }
+            let amountToBeSent = testHelpers.getInvalidAmount(depositResponse.data.account_balance.amount)
 
-            const sendMoneyRequest = {
-                sender_account_id: senderResponse.data.account.account_id,
-                receiver_account_id: receiverResponse.data.account.account_id,
-                money: {
-                    amount: amountToBeSent,
-                    currency_code: senderResponse.data.account_currency,
-                },
-                description: "Test transfer"
-            };
+            const sendMoneyRequest = testHelpers.generateSendMoneyRequest(
+                senderResponse.data.account.account_id,
+                receiverResponse.data.account.account_id,
+                senderResponse.data.account_currency,
+                amountToBeSent)
 
             const sendMoneyResponse = await testHelpers.promisifyCall('SendMoney', sendMoneyRequest);
 
@@ -128,26 +90,19 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
             const senderResponse = await testHelpers.promisifyCall('CreateUser', senderUserData);
 
             // Make a deposit to sender account
-            const depositRequest = {
-                money: {
-                    amount: Number(faker.finance.amount()),
-                    currency_code: senderResponse.data.account_currency
-                },
-                account_id: senderResponse.data.account.account_id,
-                value_date: new Date().toLocaleDateString('en-GB'),
-                description: "Test deposit"
-            };
+            const depositRequest = testHelpers.generateDepositRequest(
+                senderResponse.data.account.account_id,
+                senderResponse.data.account_currency,
+                Number(faker.finance.amount())
+            );
+
             await testHelpers.promisifyCall('Deposit', depositRequest);
 
-            const sendMoneyRequest = {
-                sender_account_id: senderResponse.data.account.account_id,
-                receiver_account_id: 99999999, // Non-existent AccountId
-                money: {
-                    amount: Number(faker.finance.amount()),
-                    currency_code: senderResponse.data.account_currency,
-                },
-                description: "Test transfer"
-            };
+            const sendMoneyRequest = testHelpers.generateSendMoneyRequest(
+                senderResponse.data.account.account_id,
+                99999999,
+                senderResponse.data.account_currency,
+                100)
 
             const sendMoneyResponse = await testHelpers.promisifyCall('SendMoney', sendMoneyRequest);
 
@@ -156,15 +111,11 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
         });
 
         test('should reject transfer from non-existent sender', async () => {
-            const sendMoneyRequest = {
-                sender_account_id: 99999999, // Non-existent AccountId
-                receiver_account_id: receiverResponse.data.account.account_id,
-                money: {
-                    amount: Number(faker.finance.amount()),
-                    currency_code: receiverResponse.data.account_currency,
-                },
-                description: "Test transfer"
-            };
+            const sendMoneyRequest = testHelpers.generateSendMoneyRequest(
+                99999999,
+                receiverResponse.data.account.account_id,
+                receiverResponse.data.account_currency,
+                1000)
 
             const sendMoneyResponse = await testHelpers.promisifyCall('SendMoney', sendMoneyRequest);
 

@@ -226,7 +226,7 @@ describe('Banking gRPC Service - Performance Tests', () => {
             console.log(`High volume balance inquiries - Average: ${averageTime.toFixed(2)}ms`);
         });
 
-        test('should handle high volume of withdraw inquiries', async () => {
+        test('should handle high volume of withdraw requests', async () => {
             const {userResponse} = await testHelpers.createUserWithDeposit(null, 1000);
             const withdrawCount = 80
             const withdrawAmount = 10
@@ -255,5 +255,64 @@ describe('Banking gRPC Service - Performance Tests', () => {
             console.log(`High volume balance inquiries - Average: ${averageTime.toFixed(2)}ms`);
         })
 
+        test('should handle high volume of send money requests ', async () => {
+            const sentMoneyCount = 100
+            const amountToBeSent = 10
+            const promises = [];
+
+            const receiverResponse = await testHelpers.createUser();
+            const senderUserData = testHelpers.generateUserData({ account_currency: receiverResponse.data.account_currency });
+            const {userResponse: senderResponse} = await testHelpers.createUserWithDeposit(senderUserData, 1000);
+            const sendMoneyRequest = testHelpers.generateSendMoneyRequest(
+                senderResponse.data.account.account_id,
+                receiverResponse.data.account.account_id,
+                senderResponse.data.account_currency,
+                amountToBeSent)
+
+            const startTime = performance.now();
+
+            for (let i = 0; i < sentMoneyCount; i++) {
+                promises.push(testHelpers.promisifyCall('SendMoney', sendMoneyRequest));
+            }
+
+            const responses = await Promise.all(promises);
+            const endTime = performance.now();
+
+            const totalTime = endTime - startTime;
+            const averageTime = totalTime / sentMoneyCount;
+
+            responses.forEach(response => {
+                expect(response.error).toBe("");
+            });
+
+            expect(averageTime).toBeLessThan(PERFORMANCE_THRESHOLDS.SEND_MONEY);
+            console.log(`High volume balance inquiries - Average: ${averageTime.toFixed(2)}ms`);
+        })
+
+    })
+
+    describe('Memory and resource Testing',()=>{
+        test('should not have memory leaks with repeated operations', async () => {
+            const initialMemory = process.memoryUsage();
+            const iterations = 100;
+
+            for (let i = 0; i < iterations; i++) {
+                const userData = testHelpers.generateUserData();
+                await testHelpers.promisifyCall('CreateUser', userData);
+
+                if (i % 10 === 0) {
+                    global.gc && global.gc(); // Force garbage collection if available
+                }
+            }
+
+            const finalMemory = process.memoryUsage();
+            const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
+            const memoryIncreasePerOperation = memoryIncrease / iterations;
+
+            console.log(`Memory increase per operation: ${(memoryIncreasePerOperation / 1024).toFixed(2)} KB`);
+
+            // Memory increase should be reasonable (less than 10KB per operation)
+            expect(memoryIncreasePerOperation).toBeLessThan(10 * 1024);
+        });
     })
 })
