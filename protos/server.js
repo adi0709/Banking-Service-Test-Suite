@@ -1,7 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const {ErrorMessages} = require("../data/constanst");
+const {ErrorMessages} = require("../data/errorMessageConstants");
 
 // Load the proto file
 const PROTO_PATH = path.join(__dirname, 'banking.proto');

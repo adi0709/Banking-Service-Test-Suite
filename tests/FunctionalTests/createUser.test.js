@@ -1,4 +1,4 @@
-const TestHelpers = require('../utils/testHelper');
+const TestHelpers = require('../../utils/testHelper');
 
 describe('Banking gRPC Service - CreateUser API Tests', () => {
     let testHelpers;

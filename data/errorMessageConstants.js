@@ -1,4 +1,4 @@
-export const ErrorMessages = {
+const ErrorMessages = {
     MISSING_FIELDS: 'Please provide all the mandatory fields!',
     USER_EXISTS: 'User with this email or ID number already exists',
     ACCOUNT_NOT_FOUND: 'Account not found',
@@ -11,3 +11,5 @@ export const ErrorMessages = {
     INSUFFICIENT_SENDER_BALANCE: 'Insufficient balance in sender account',
     CURRENCY_MISMATCH: 'Currency mismatch between account currency and money sent currency'
 };
+
+module.exports = {ErrorMessages}

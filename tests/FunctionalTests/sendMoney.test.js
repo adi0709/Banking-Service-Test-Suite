@@ -1,4 +1,4 @@
-const TestHelpers = require('../utils/testHelper');
+const TestHelpers = require('../../utils/testHelper');
 const { faker } = require('@faker-js/faker');
 
 describe('Banking gRPC Service - SendMoney API Tests', () => {
@@ -20,6 +20,11 @@ describe('Banking gRPC Service - SendMoney API Tests', () => {
 
     describe('Successful Money Transfer', () => {
         test('should transfer money successfully', async () => {
+
+            const {userResponse} = await testHelpers.createUserWithDeposit(null, 1000);
+
+
+            // TODO: Use a new function to create both sender and receiver data to simplify tests
             // Create sender user with same currency as receiver
             const senderUserData = testHelpers.generateUserData({
                 account_currency: receiverResponse.data.account_currency

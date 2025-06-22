@@ -1,4 +1,4 @@
-const TestHelpers = require('../utils/testHelper');
+const TestHelpers = require('../../utils/testHelper');
 const { faker } = require('@faker-js/faker');
 
 describe('Banking gRPC Service - Deposit API Tests', () => {
