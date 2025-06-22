@@ -1,0 +1,28 @@
+{
+  "name": "yolo-test-assignment",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "generate:grpc": "npx grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./generated --grpc_out=grpc_js:./generated -I ./protos ./protos/banking.proto",
+    "start:server": "node protos/server.js",
+    "test": "npx jest",
+    "test:integration": "concurrently --kill-others --success first \"npm run start:server\" \"wait-on tcp:localhost:50052 && npm run test\""
+  },
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.7.15"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "concurrently": "^9.1.2",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "grpc-tools": "^1.13.0",
+    "jest": "^30.0.2",
+    "wait-on": "^8.0.3"
+  }
+}
