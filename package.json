@@ -6,7 +6,10 @@
     "generate:grpc": "npx grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./generated --grpc_out=grpc_js:./generated -I ./protos ./protos/banking.proto",
     "start:server": "node protos/server.js",
     "test": "npx jest",
-    "test:integration": "concurrently --kill-others --success first \"npm run start:server\" \"wait-on tcp:localhost:50052 && npm run test\""
+    "test:integration": "concurrently --kill-others --success first \"npm run start:server\" \"wait-on tcp:localhost:50052 && npm run test\"",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
   },
   "private": true,
   "keywords": [],

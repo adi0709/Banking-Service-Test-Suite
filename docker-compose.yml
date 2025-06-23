@@ -1,0 +1,11 @@
+services:
+  banking-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: banking-integration-tests
+    ports:
+      - "50052:50052"
+    environment:
+      - NODE_ENV=test
+    command: ["npm", "run", "test:integration"]
