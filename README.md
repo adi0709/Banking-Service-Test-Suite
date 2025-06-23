@@ -27,7 +27,10 @@ yolo-tests/
 │       └── security.test.js        # Input validation and security tests
 ├── utils/
 │   └── testHelper.js              # Test utilities and helper functions
+├── .dockerignore                  # Docker ignore file
 ├── .gitignore
+├── docker-compose.yml             # Docker Compose configuration
+├── Dockerfile                     # Docker container definition
 ├── package.json
 └── README.md
 ```
@@ -54,13 +57,25 @@ yolo-tests/
 - **Wait-on**: Wait for services to be available
 - **GitHub Actions**: Automated CI/CD pipeline
 
+### Containerization
+- **Docker**: Container platform for consistent environments
+- **Docker Compose**: Multi-container Docker application management
+
 ## 🚀 Getting Started
 
 ### Prerequisites
+
+#### For Local Development
 - Node.js (version 20 or higher)
 - npm package manager
 
-### Installation
+#### For Docker Development
+- Docker (version 20.0 or higher)
+- Docker Compose (version 2.0 or higher)
+
+### Installation Options
+
+#### Option 1: Local Development Setup
 
 1. **Clone the repository**
    ```bash
@@ -78,9 +93,24 @@ yolo-tests/
    npm run generate:grpc
    ```
 
+#### Option 2: Docker Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd yolo-tests
+   ```
+
+2. **Build Docker image**
+   ```bash
+   npm run docker:build
+   ```
+
+No additional setup required - the Docker container handles all dependencies and gRPC generation automatically.
+
 ## 🎯 Available Commands
 
-### Core Operations
+### Local Development Commands
 
 #### Generate gRPC Code
 ```bash
@@ -106,7 +136,122 @@ npm run test:integration
 ```
 Starts the server and runs tests automatically using concurrently.
 
-### Manual Testing Workflow
+### Docker Commands
+
+#### Build Docker Image
+```bash
+npm run docker:build
+# OR
+docker-compose build
+```
+Builds the Docker image with all dependencies and generates gRPC stubs automatically.
+
+#### Run Tests in Docker Container
+```bash
+npm run docker:up
+# OR
+docker-compose up
+```
+Starts the containerized application and runs the complete integration test suite.
+
+#### Stop and Clean Up Docker Container
+```bash
+npm run docker:down
+# OR
+docker-compose down
+```
+Stops the running container and removes it.
+
+#### Advanced Docker Commands
+
+**Build and run in detached mode:**
+```bash
+docker-compose up -d
+```
+
+**View container logs:**
+```bash
+docker-compose logs -f banking-tests
+```
+
+**Run tests with custom command:**
+```bash
+docker-compose run --rm banking-tests npm test
+```
+
+**Run specific test file:**
+```bash
+docker-compose run --rm banking-tests npm test -- tests/FunctionalTests/deposit.test.js
+```
+
+**Access container shell for debugging:**
+```bash
+docker-compose run --rm banking-tests sh
+```
+
+## 🐳 Docker Configuration
+
+### Dockerfile Features
+
+The `Dockerfile` is optimized for:
+
+- **Base Image**: Uses `node:20-alpine` for minimal footprint
+- **System Dependencies**: Installs Python, make, and g++ for gRPC compilation
+- **Security**: Creates non-root user (`banking`) for container execution
+- **Port Exposure**: Exposes port 50052 for gRPC service
+- **Automatic Setup**: Generates gRPC stubs during build process
+
+### Docker Compose Configuration
+
+The `docker-compose.yml` provides:
+
+- **Service Name**: `banking-tests`
+- **Port Mapping**: Maps container port 50052 to host port 50052
+- **Environment**: Sets `NODE_ENV=test` for testing environment
+- **Default Command**: Runs integration tests by default
+- **Container Name**: `banking-integration-tests` for easy identification
+
+### Docker Ignore Configuration
+
+The `.dockerignore` file excludes unnecessary files from the Docker build context:
+
+- Node modules (installed inside container)
+- Log files and debug outputs
+- IDE configuration files
+- Test coverage reports
+- Git history and documentation
+
+## 🧪 Test Execution Methods
+
+### Method 1: Docker Compose (Recommended)
+
+**Quick start - Build and run tests:**
+```bash
+npm run docker:build && npm run docker:up
+```
+
+**For development iterations:**
+```bash
+# First time setup
+docker-compose build
+
+# Run tests (can be repeated)
+docker-compose up
+```
+
+### Method 2: Direct Docker Commands
+
+```bash
+# Build the image
+docker build -t banking-tests .
+
+# Run the container with tests
+docker run --rm -p 50052:50052 banking-tests
+```
+
+### Method 3: Local Development
+
+**Manual testing workflow:**
 
 1. **Start the server in one terminal:**
    ```bash
@@ -116,6 +261,72 @@ Starts the server and runs tests automatically using concurrently.
 2. **Run tests in another terminal:**
    ```bash
    npm test
+   ```
+
+**Automated testing workflow:**
+```bash
+npm run test:integration
+```
+
+## 🔧 Docker Troubleshooting
+
+### Common Issues and Solutions
+
+**Port already in use:**
+```bash
+# Check what's using port 50052
+lsof -i :50052
+
+# Kill the process or use different port
+docker-compose run --rm -p 50053:50052 banking-tests
+```
+
+**Container build failures:**
+```bash
+# Clean rebuild
+docker-compose down
+docker-compose build --no-cache
+docker-compose up
+```
+
+**Permission issues:**
+```bash
+# The Dockerfile creates a non-root user, but if you encounter issues:
+docker-compose run --rm --user root banking-tests sh
+```
+
+**View detailed logs:**
+```bash
+# Follow logs in real-time
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs banking-tests
+```
+
+### Development Workflow with Docker
+
+**Recommended development cycle:**
+
+1. **Initial setup:**
+   ```bash
+   docker-compose build
+   ```
+
+2. **Run tests during development:**
+   ```bash
+   docker-compose up
+   ```
+
+3. **Make code changes and test again:**
+   ```bash
+   # Docker will use volume mounts if configured, or rebuild if needed
+   docker-compose up
+   ```
+
+4. **Clean up when done:**
+   ```bash
+   docker-compose down
    ```
 
 ## 🧪 Test Categories
@@ -188,7 +399,7 @@ The repository includes a GitHub Actions workflow (`.github/workflows/test.yml`)
 3. Generates gRPC stubs
 4. Runs the complete test suite
 
-The CI pipeline triggers on every push to any branch.
+The CI pipeline triggers on every push to any branch and can also be configured to use Docker for consistent environments across different CI runners.
 
 ## 🧩 Test Utilities
 
